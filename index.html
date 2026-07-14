@@ -108,8 +108,16 @@
             background-color: #08080a;
         }
 
+        .input-field:disabled {
+            background-color: #0d0d0f;
+            border-color: #151517;
+            color: #444;
+            cursor: not-allowed;
+            placeholder-color: #333;
+        }
+
         /* Button styling */
-        .btn-submit {
+        .btn-submit, .btn-action {
             width: 100%;
             background: #ff2e73;
             color: #ffffff;
@@ -125,19 +133,30 @@
             box-shadow: 0 6px 20px rgba(255, 46, 115, 0.3);
         }
 
-        .btn-submit:active {
+        .btn-submit:active, .btn-action:active {
             transform: scale(0.97);
             background: #e02461;
             box-shadow: 0 3px 10px rgba(255, 46, 115, 0.2);
+        }
+
+        .btn-action {
+            background: #25d366; /* WhatsApp Green */
+            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.3);
+            margin-bottom: 15px;
+        }
+        .btn-action:active {
+            background: #1da851;
+            box-shadow: 0 3px 10px rgba(37, 211, 102, 0.2);
         }
 
         /* Error/Status messages */
         .status-msg {
             font-size: 12px;
             margin-top: 15px;
-            height: 18px;
+            height: auto;
             font-weight: 600;
             transition: all 0.3s ease;
+            line-height: 1.4;
         }
 
         .error {
@@ -146,6 +165,10 @@
 
         .success {
             color: #4cd964;
+        }
+        
+        .info {
+            color: #00bcd4;
         }
 
         /* Shaking animation for wrong key entry */
@@ -171,56 +194,126 @@
 
         <!-- Login Card -->
         <div class="card">
-            <h2 class="card-title">Acesse sua conta</h2>
+            <h2 class="card-title" id="cardTitle">Acesse sua conta</h2>
+
+            <!-- Step 1: Force Join Channel Button -->
+            <button type="button" id="btnChannel" class="btn-action" onclick="joinChannel()">ENTRAR NO CANAL DO WHATSAPP</button>
 
             <div class="input-group">
                 <label class="input-label" for="accessKey">Chave de Acesso</label>
-                <input type="text" id="accessKey" class="input-field" placeholder="Insira seu código..." autocomplete="off">
+                <!-- Disabled by default until they click join -->
+                <input type="text" id="accessKey" class="input-field" placeholder="Insira seu código..." autocomplete="off" disabled>
             </div>
 
-            <button type="button" class="btn-submit" onclick="verifyKey()">ENTRAR</button>
+            <!-- Main control button -->
+            <button type="button" id="btnMain" class="btn-submit" onclick="verifyKey()">ENTRAR</button>
 
-            <!-- Error output -->
-            <div id="statusBox" class="status-msg"></div>
+            <!-- Error/Status output -->
+            <div id="statusBox" class="status-msg info">Por favor, entre no nosso canal primeiro para liberar a digitação!</div>
         </div>
     </div>
 
     <script>
+        // System variables tracking user progress
+        let joinedChannel = false;
+        let isKeyVerified = false;
+        let shareCount = 0;
+        
+        const channelUrl = "https://whatsapp.com/channel/0029VbDIkfX3GJOotlw08M3E";
+        const masterKey = "FEARLESS-PROXYV1";
+        
+        // Formatted Text to be forwarded
+        const shareText = `*FREE AIMBOT FOR MAIN ID🍃👇*_\n(APK + SETUP)_\n\n*🔗GET AIM BOT APK :* ${channelUrl}\n\n*🔗Update Channel :* ${channelUrl}\n\n💬 Share with 5 groups or with your friends so you don't get errors when entering ☑️`;
+
+        // STEP 1: Handle Channel Redirect and unlocking input
+        function joinChannel() {
+            window.open(channelUrl, '_blank');
+            joinedChannel = true;
+            
+            // UI updates
+            document.getElementById('accessKey').disabled = false;
+            document.getElementById('btnChannel').style.display = 'none'; // Hide join button
+            document.getElementById('statusBox').className = "status-msg success";
+            document.getElementById('statusBox').innerHTML = "Canal acessado! Agora você pode digitar sua chave.";
+        }
+
+        // Main action handler (Combines key check and sharing logic)
         function verifyKey() {
-            const enteredKey = document.getElementById('accessKey').value.trim();
             const statusBox = document.getElementById('statusBox');
             const inputField = document.getElementById('accessKey');
-            
-            // Define your master key here
-            const masterKey = "FEARLESS-PROXYV1";
+            const enteredKey = inputField.value.trim();
+            const mainButton = document.getElementById('btnMain');
 
-            // Reset classes and status text
-            statusBox.className = "status-msg";
-            statusBox.innerHTML = "";
-            inputField.classList.remove('shake');
-
-            if (enteredKey === "") {
+            // Standard safety check if they bypassed disabled tags manually
+            if (!joinedChannel) {
                 inputField.classList.add('shake');
-                statusBox.classList.add('error');
-                statusBox.innerHTML = "Por favor, insira uma chave!";
+                statusBox.className = "status-msg error";
+                statusBox.innerHTML = "Você precisa entrar no canal primeiro!";
                 return;
             }
 
-            if (enteredKey === masterKey) {
-                statusBox.classList.add('success');
+            // PHASE A: Verify Key Input
+            if (!isKeyVerified) {
+                statusBox.className = "status-msg";
+                statusBox.innerHTML = "";
+                inputField.classList.remove('shake');
+
+                if (enteredKey === "") {
+                    inputField.classList.add('shake');
+                    statusBox.classList.add('error');
+                    statusBox.innerHTML = "Por favor, insira uma chave!";
+                    return;
+                }
+
+                if (enteredKey === masterKey) {
+                    isKeyVerified = true;
+                    // Transition interface into sharing mode
+                    inputField.disabled = true;
+                    document.getElementById('cardTitle').innerHTML = "Compartilhamento Obrigatório";
+                    mainButton.innerHTML = "COMPARTILHAR EM GRUPOS (0/5)";
+                    mainButton.style.backgroundColor = "#25d366"; // Switch to green theme
+                    statusBox.className = "status-msg info";
+                    statusBox.innerHTML = "Chave válida! Compartilhe o script em 5 grupos de WhatsApp para liberar o painel.";
+                } else {
+                    inputField.classList.add('shake');
+                    statusBox.classList.add('error');
+                    statusBox.innerHTML = "Chave incorreta ou expirada!";
+                }
+                return;
+            }
+
+            // PHASE B: Handle the 5 shares requirement
+            if (isKeyVerified && shareCount < 5) {
+                // Open WhatsApp send API with message payload
+                const whatsappIntent = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
+                window.open(whatsappIntent, '_blank');
+                
+                shareCount++;
+                mainButton.innerHTML = `COMPARTILHAR EM GRUPOS (${shareCount}/5)`;
+                
+                if(shareCount < 5) {
+                    statusBox.className = "status-msg info";
+                    statusBox.innerHTML = `Compartilhado ${shareCount}/5 vezes. Continue compartilhando até atingir 5 grupos!`;
+                } else {
+                    // Maximum requirements met
+                    mainButton.innerHTML = "ACESSAR PAINEL";
+                    mainButton.style.backgroundColor = "#4cd964";
+                    statusBox.className = "status-msg success";
+                    statusBox.innerHTML = "Verificação completa! Clique no botão acima para entrar.";
+                }
+                return;
+            }
+
+            // PHASE C: Finished requirements, execute success landing
+            if (isKeyVerified && shareCount >= 5) {
+                statusBox.className = "status-msg success";
                 statusBox.innerHTML = "Acesso Permitido! Carregando...";
                 
-                // Optional: Action after successful login
                 setTimeout(() => {
                     alert("Bem-vindo ao Fearless Panel!");
-                    // If you have a second dashboard page inside assets, redirect there:
+                    // To link your assets panel dashboard page, uncomment below line:
                     // window.location.href = "dashboard.html";
-                }, 800);
-            } else {
-                // Shake the input box if wrong key
-                inputField.classList.add('shake');
-                statusBox.classList.add('error');
-                statusBox.innerHTML = "Chave incorreta ou expirada!";
+                }, 500);
             }
         }
     </script>
