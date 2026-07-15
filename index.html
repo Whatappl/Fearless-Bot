@@ -219,14 +219,16 @@
         let isKeyVerified = false;
         let shareCount = 0;
         
+        // Direct mobile/universal WhatsApp URL schemas
         const channelUrl = "https://whatsapp.com/channel/0029VbDIkfX3GJOotlw08M3E";
         const masterKey = "FEARLESS-PROXYV1";
         
-        // Formatted Text to be forwarded
+        // Formatted Text to be shared with contacts/groups
         const shareText = `*FREE AIMBOT FOR MAIN ID🍃👇*_\n(APK + SETUP)_\n\n*🔗GET AIM BOT APK :* ${channelUrl}\n\n*🔗Update Channel :* ${channelUrl}\n\n💬 Share with 5 groups or with your friends so you don't get errors when entering ☑️`;
 
-        // STEP 1: Handle Channel Redirect and unlocking input
+        // STEP 1: Direct user directly to WhatsApp channel
         function joinChannel() {
+            // Using blank window targets the WhatsApp client immediately on devices
             window.open(channelUrl, '_blank');
             joinedChannel = true;
             
@@ -282,10 +284,10 @@
                 return;
             }
 
-            // PHASE B: Handle the 5 shares requirement
+            // PHASE B: Direct user to WhatsApp to select contacts/groups & share
             if (isKeyVerified && shareCount < 5) {
-                // Open WhatsApp send API with message payload
-                const whatsappIntent = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
+                // Using wa.me/send forces native contact picker instead of API middleman page
+                const whatsappIntent = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
                 window.open(whatsappIntent, '_blank');
                 
                 shareCount++;
